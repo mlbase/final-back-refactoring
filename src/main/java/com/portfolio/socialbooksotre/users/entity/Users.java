@@ -1,6 +1,7 @@
-package com.portfolio.socialbooksotre.users;
+package com.portfolio.socialbooksotre.users.entity;
 
 import com.portfolio.socialbooksotre.commons.BaseTime;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -10,6 +11,7 @@ import javax.persistence.*;
 @Entity
 @Getter
 @NoArgsConstructor
+@Table(name = "social_users")
 public class Users extends BaseTime {
 
     @Id
@@ -46,5 +48,13 @@ public class Users extends BaseTime {
 
     public String getAddress() {
         return address;
+    }
+
+    @Builder
+    public Users(Long id, Long name, String email, String address) {
+        this.id = id;
+        this.name = name;
+        this.email = email;
+        this.address = address;
     }
 }
