@@ -4,10 +4,11 @@ import com.portfolio.socialbooksotre.commons.BaseTime;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import javax.persistence.*;
 
-
+@ToString
 @Entity
 @Getter
 @NoArgsConstructor
