@@ -29,14 +29,13 @@ class SocialbooksotreApplicationTests {
 				address("본사주소").
 				build();
 		System.out.println("registerUser.toString() = " + registerUser.toString());
-		usersRepository.save(registerUser);
-		/*boolean registerCheck = usersService.register(registerUser);
+		boolean registerCheck = usersService.register(registerUser);
 
 		if(registerCheck){
 			System.out.println(usersRepository.findByName("admin").toString());
 		}
 
-		System.out.println("회원가입 실패");*/
+		System.out.println("회원가입 실패");
 	}
 
 	@Test

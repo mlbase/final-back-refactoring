@@ -22,7 +22,7 @@ public class Users extends BaseTime {
 
     private String password;
 
-    @Column(name = "id", unique = true, updatable = false)
+    @Column(name = "username", unique = true, updatable = false)
     private String name;
 
     @Column(unique = true)
