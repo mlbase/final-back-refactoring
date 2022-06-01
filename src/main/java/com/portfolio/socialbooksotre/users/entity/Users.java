@@ -19,11 +19,10 @@ public class Users extends BaseTime {
     @Column(name = "users_id", updatable = false)
     private Long id;
 
+    private String password;
 
     @Column(name = "id", unique = true, updatable = false)
-    private Long name;
-
-    private String password;
+    private String name;
 
     @Column(unique = true)
     private String email;
@@ -34,7 +33,7 @@ public class Users extends BaseTime {
         return id;
     }
 
-    public Long getName() {
+    public String getName() {
         return name;
     }
 
@@ -51,7 +50,14 @@ public class Users extends BaseTime {
     }
 
     @Builder
-    public Users(Long id, Long name, String email, String address) {
+    public Users(String password, String name, String email, String address) {
+        this.password = password;
+        this.name = name;
+        this.email = email;
+        this.address = address;
+    }
+
+    public Users(Long id, String name, String email, String address) {
         this.id = id;
         this.name = name;
         this.email = email;
