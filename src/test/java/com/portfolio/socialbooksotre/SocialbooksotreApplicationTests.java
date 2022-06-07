@@ -46,6 +46,7 @@ class SocialbooksotreApplicationTests {
 			System.out.println("loginedUser.toString() = " + loginedUser.toString());
 		}
 
+
 		System.out.println("login 실패");
 	}
 
