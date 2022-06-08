@@ -3,9 +3,23 @@ package com.portfolio.socialbooksotre;
 import com.portfolio.socialbooksotre.users.entity.Users;
 import com.portfolio.socialbooksotre.users.repository.UsersRepository;
 import com.portfolio.socialbooksotre.users.service.UsersService;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import jwt.AuthenticationFacade;
+import jwt.JwtTokenProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import java.security.Key;
+import java.util.Date;
+import java.util.stream.Collectors;
 
 @SpringBootTest
 class SocialbooksotreApplicationTests {
@@ -57,5 +71,31 @@ class SocialbooksotreApplicationTests {
 		if(testUser != null){
 			usersRepository.delete(testUser);
 		}
+	}
+
+	@Test
+	@WithMockUser
+	void TokenGenerationTest(){
+
+		AuthenticationFacade authenticationFacade = new AuthenticationFacade();
+		Authentication authentication = authenticationFacade.getAuthentication();
+
+		String authorities = authentication.getAuthorities().stream()
+				.map(GrantedAuthority::getAuthority)
+				.collect(Collectors.joining(","));
+
+		Long now = (new Date().getTime());
+
+		Date AcessTokenExpiresIn = new Date(now + 1800000L);
+
+		byte[] KeyBytes = Decoders.BASE64.decode("and0dG9rZW7rp4zrk6TquLDrhIjrrLTtnpjrk6Tri6Tsp4Tsp5zsnbTqsbDrp4zrqofri6zs");
+		Key key = Keys.hmacShaKeyFor(KeyBytes);
+
+		String acessToken = Jwts.builder().setSubject(authentication.getName())
+				.claim("auth",authorities)
+				.setExpiration(AcessTokenExpiresIn)
+				.signWith(key).compact();
+
+		System.out.println("acessToken = " + acessToken);
 	}
 }
