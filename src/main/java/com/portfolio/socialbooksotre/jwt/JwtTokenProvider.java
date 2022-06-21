@@ -1,4 +1,4 @@
-package jwt;
+package com.portfolio.socialbooksotre.jwt;
 
 import com.portfolio.socialbooksotre.users.repository.UsersRepository;
 import io.jsonwebtoken.io.Decoders;

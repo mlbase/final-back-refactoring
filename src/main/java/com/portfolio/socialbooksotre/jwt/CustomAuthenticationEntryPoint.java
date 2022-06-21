@@ -1,4 +1,4 @@
-package jwt;
+package com.portfolio.socialbooksotre.jwt;
 
 import org.json.simple.JSONObject;
 import org.springframework.http.ResponseEntity;

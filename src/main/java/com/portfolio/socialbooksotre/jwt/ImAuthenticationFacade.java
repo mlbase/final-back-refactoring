@@ -1,4 +1,4 @@
-package jwt;
+package com.portfolio.socialbooksotre.jwt;
 
 import org.springframework.security.core.Authentication;
 
