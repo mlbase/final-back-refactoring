@@ -45,7 +45,6 @@ class SocialbooksotreApplicationTests {
 		if(registerCheck){
 			System.out.println(usersRepository.findByName("admin").toString());
 		}
-
 		System.out.println("회원가입 실패");
 	}
 
