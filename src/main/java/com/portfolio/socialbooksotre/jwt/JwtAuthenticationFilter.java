@@ -2,39 +2,54 @@ package com.portfolio.socialbooksotre.jwt;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
-import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.filter.GenericFilterBean;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @Slf4j
 @RequiredArgsConstructor
-public class JwtAuthenticationFilter extends OncePerRequestFilter {
+public class JwtAuthenticationFilter extends GenericFilterBean {
+
+    private static final String AUTHORIZATION_HEADER = "authorization";
+    private static final String BEARER_TYPE = "Bearer";
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final RedisTemplate redisTemplate;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        log.info("jwt Filter");
-        String jwtToken = parseJwt(request);
-        log.info("jwtToken: {}", jwtToken);
-        if(jwtToken != null){
+    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+        String token = resolveToken((HttpServletRequest) servletRequest);
+        log.info("token {}", token);
+        if( token != null && jwtTokenProvider.revalidationToken(token, (HttpServletRequest) servletRequest)){
 
+            String isLogout = (String) redisTemplate.opsForValue().get(token);
+
+            if(ObjectUtils.isEmpty(isLogout)){
+                Authentication authentication = jwtTokenProvider.getAuthentication(token);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
         }
-        log.info("next Filter");
-        filterChain.doFilter(request, response);
+
+        filterChain.doFilter(servletRequest, servletResponse);
 
     }
 
-    private String parseJwt(HttpServletRequest request) {
-        String headerAuth = request.getHeader("Authorization");
-        if(StringUtils.hasText(headerAuth) && headerAuth.startsWith("Bearer ")){
-            return headerAuth.substring(7, headerAuth.length());
+    private String resolveToken(HttpServletRequest request){
+        String bearerToken = request.getHeader(AUTHORIZATION_HEADER);
+        if( StringUtils.hasText(bearerToken) && bearerToken.startsWith(BEARER_TYPE)){
+            return bearerToken.substring(7);
         }
+
         return null;
     }
 }
