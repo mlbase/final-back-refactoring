@@ -1,7 +1,10 @@
 package com.portfolio.socialbooksotre.jwt;
 
+import com.portfolio.socialbooksotre.users.dto.response.UserResponseDto;
+import com.portfolio.socialbooksotre.users.entity.Users;
 import com.portfolio.socialbooksotre.users.repository.UsersRepository;
 import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.SignatureException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -10,11 +13,13 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 
+import javax.servlet.http.HttpServletRequest;
 import java.security.Key;
 import java.util.Arrays;
 import java.util.Date;
@@ -43,7 +48,7 @@ public class JwtTokenProvider {
         this.authenticationFacade = facade;
     }
 
-    public String TokenGenerator(Authentication authentication){
+    public UserResponseDto.TokenInfo TokenGenerator(Authentication authentication){
 
         String authorities = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
@@ -60,7 +65,21 @@ public class JwtTokenProvider {
                 .signWith(key,SignatureAlgorithm.HS256)
                 .compact();
 
-        return AcessToken;
+        String RefreshToken = Jwts.builder()
+                .setExpiration(new Date(now + REFRESH_TOKEN_EXPIRE_TIME))
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+
+        Users users = usersRepository.findByName(authentication.getName())
+                .orElseThrow(() -> new UsernameNotFoundException("user not found"));
+
+        return UserResponseDto.TokenInfo.builder()
+                .accessToken(AcessToken)
+                .refreshToken(RefreshToken)
+                .refreshTokenExpirationTime(REFRESH_TOKEN_EXPIRE_TIME)
+                .userId(users.getId())
+                .userName(users.getName())
+                .build();
     }
 
     public Authentication getAuthentication(String jwtToken){
@@ -75,6 +94,44 @@ public class JwtTokenProvider {
     }
 
     private Claims parseClaims(String jwtToken) {
-        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(jwtToken).getBody();
+        try {
+            return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(jwtToken).getBody();
+        } catch (ExpiredJwtException e) {
+            log.info("만료 체크");
+            return e.getClaims();
+        }
+    }
+
+    public boolean validateToken(String token) throws ExpiredJwtException{
+        log.info("access-token : : {}", token);
+        try {
+            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+            return true;
+        } catch (io.jsonwebtoken.security.SecurityException e) {
+            log.info("Invalid jwt token {]", e);
+        } catch (UnsupportedJwtException e) {
+            log.info("Unsupported JWT token {}", e);
+        } catch (IllegalArgumentException e) {
+            log.info("JWT claims string is empty {}", e);
+        }
+
+        return false;
+    }
+
+    public boolean revalidationToken(String token, HttpServletRequest request){
+        try {
+            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+        } catch (ExpiredJwtException e) {
+            request.setAttribute("exception", 521);
+        } catch (UnsupportedJwtException e) {
+            log.info("Unsupported JWT token {}", e);
+        } catch (io.jsonwebtoken.security.SecurityException|MalformedJwtException e) {
+            log.info("Invalid JWT token {}", e);
+        } catch (IllegalArgumentException e) {
+            log.info("JWT claims are empty {}", e);
+        }
+
+        log.info("해당없음");
+        return false;
     }
 }
